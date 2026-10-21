@@ -1,0 +1,123 @@
+{% extends "base.html" %}
+{% block title %}Report an issue — Vehicle QR Alert{% endblock %}
+{% block content %}
+<div class="card card-narrow" id="report-card">
+  <h2>Report something about this vehicle</h2>
+  <p class="helper-text" style="margin-bottom:22px;">
+    No account needed. Pick what's going on, describe it, and add a photo if you can — it helps the owner trust the report.
+  </p>
+
+  <div id="banner" class="alert-banner"></div>
+
+  <form id="report-form">
+    <div class="field">
+      <label for="issue_type">What kind of issue is this?</label>
+      <select id="issue_type" required>
+        <option value="" disabled selected>Choose one...</option>
+        <option>Parking Issue</option>
+        <option>Vehicle Damage</option>
+        <option>Suspicious Activity / Theft</option>
+        <option>Emergency / Accident</option>
+        <option>Other</option>
+      </select>
+    </div>
+
+    <div class="field">
+      <label for="message">Describe what you're seeing</label>
+      <textarea id="message" placeholder="e.g. front bumper is dented and the headlight is cracked" required></textarea>
+    </div>
+
+    <div class="field">
+      <label for="image">Photo (optional, but recommended)</label>
+      <input id="image" type="file" accept="image/png,image/jpeg,image/webp" />
+      <div class="helper-text">A photo helps our check confirm this is a genuine report, not a prank.</div>
+      <img id="image-preview" style="display:none; margin-top:10px; max-width:100%; border-radius:8px; border:1px solid var(--asphalt-600);" />
+    </div>
+
+    <div class="field">
+      <label for="contact">Your contact (optional)</label>
+      <input id="contact" placeholder="Phone or email, if you're open to being contacted back" />
+    </div>
+
+    <button class="btn btn-primary" style="width:100%;" type="submit" id="submit-btn">Send report</button>
+  </form>
+</div>
+
+<div class="card card-narrow" id="result-card" style="display:none;">
+  <h2>Report sent</h2>
+  <div id="result-body"></div>
+  <a class="btn btn-ghost" style="width:100%; margin-top:14px;" href="/">Done</a>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+const RAW_TOKEN = {{ token | tojson }};
+
+document.getElementById("image").addEventListener("change", (e) => {
+  const file = e.target.files[0];
+  const preview = document.getElementById("image-preview");
+  if (!file) { preview.style.display = "none"; return; }
+  const reader = new FileReader();
+  reader.onload = (ev) => {
+    preview.src = ev.target.result;
+    preview.style.display = "block";
+  };
+  reader.readAsDataURL(file);
+});
+
+document.getElementById("report-form").addEventListener("submit", async (e) => {
+  e.preventDefault();
+  const banner = document.getElementById("banner");
+  hideBanner(banner);
+
+  const submitBtn = document.getElementById("submit-btn");
+  submitBtn.disabled = true;
+  submitBtn.textContent = "Sending...";
+
+  const formData = new FormData();
+  formData.append("qr_token", RAW_TOKEN);
+  formData.append("issue_type", document.getElementById("issue_type").value);
+  formData.append("message", document.getElementById("message").value);
+  const contact = document.getElementById("contact").value;
+  if (contact) formData.append("reporter_contact", contact);
+  const imageFile = document.getElementById("image").files[0];
+  if (imageFile) formData.append("image", imageFile);
+
+  try {
+    const res = await fetch("/alerts/report", { method: "POST", body: formData });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.detail || "Something went wrong sending the report");
+
+    document.getElementById("report-card").style.display = "none";
+    const resultCard = document.getElementById("result-card");
+    resultCard.style.display = "block";
+
+    const displayLabel = data.fused_risk_label || data.risk_label;
+    const riskClass = ["critical", "high"].includes(displayLabel.toLowerCase())
+      ? "critical"
+      : displayLabel.toLowerCase() === "medium" ? "medium" : "low";
+
+    const authClass = data.fraud_assessment === "likely_genuine" ? "low"
+      : data.fraud_assessment === "likely_prank" ? "critical" : "medium";
+    const authLabel = data.fraud_assessment.replace(/_/g, " ");
+
+    const corroboration = data.corroborating_reports > 1
+      ? `<p class="helper-text" style="margin-top:6px; color:var(--amber);">👥 ${data.corroborating_reports} people have reported this same issue recently.</p>`
+      : "";
+
+    document.getElementById("result-body").innerHTML = `
+      <p>Urgency: <span class="chip ${riskClass}">${displayLabel}${data.fused_risk_score != null ? ` (${data.fused_risk_score}/100)` : ""}</span></p>
+      <p style="margin-top:10px;">Authenticity check: <span class="chip ${authClass}">${authLabel}</span></p>
+      <p class="helper-text" style="margin-top:6px;">${data.fraud_reason || ""}</p>
+      ${corroboration}
+      <p class="helper-text" style="margin-top:10px;">Owner notification: ${data.notified}</p>
+    `;
+  } catch (err) {
+    showBanner(banner, err.message, "error");
+    submitBtn.disabled = false;
+    submitBtn.textContent = "Send report";
+  }
+});
+</script>
+{% endblock %}

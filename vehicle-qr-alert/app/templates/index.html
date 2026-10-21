@@ -1,0 +1,72 @@
+{% extends "base.html" %}
+{% block title %}Vehicle QR Alert System{% endblock %}
+{% block content %}
+<div class="hero">
+  <div>
+    <div class="eyebrow">Parking · Reporting · Alerting</div>
+    <h1>Scan the sticker.<br>Report the problem.<br>Protect the car.</h1>
+    <p class="lede">
+      Every registered vehicle gets a unique QR sticker. Anyone who
+      notices something wrong — a break-in, a flat tyre, lights left
+      on — can scan it and send an instant, risk-scored alert to the
+      owner. No app install, no account needed to report.
+    </p>
+    <div class="hero-actions">
+      <a class="btn btn-primary" href="/register">Register your vehicle</a>
+      <a class="btn btn-ghost" href="/login">I already have an account</a>
+    </div>
+  </div>
+
+  <div class="permit">
+    <div class="permit-label">Sample permit stub</div>
+    <div class="plate">UK07&nbsp;AB&nbsp;1234</div>
+    <div style="display:flex; gap:16px; align-items:center; margin-top:14px;">
+      <div class="permit-qr">
+        <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+          <rect width="100" height="100" fill="#edeae2"/>
+          <g fill="#14161b">
+            <rect x="8" y="8" width="24" height="24"/>
+            <rect x="14" y="14" width="12" height="12" fill="#edeae2"/>
+            <rect x="68" y="8" width="24" height="24"/>
+            <rect x="74" y="14" width="12" height="12" fill="#edeae2"/>
+            <rect x="8" y="68" width="24" height="24"/>
+            <rect x="14" y="74" width="12" height="12" fill="#edeae2"/>
+            <rect x="40" y="8" width="6" height="6"/><rect x="50" y="8" width="6" height="6"/>
+            <rect x="40" y="20" width="6" height="6"/><rect x="56" y="20" width="6" height="6"/>
+            <rect x="40" y="40" width="6" height="6"/><rect x="50" y="40" width="6" height="6"/>
+            <rect x="60" y="40" width="6" height="6"/><rect x="70" y="40" width="6" height="6"/>
+            <rect x="40" y="50" width="6" height="6"/><rect x="80" y="50" width="6" height="6"/>
+            <rect x="46" y="60" width="6" height="6"/><rect x="60" y="60" width="6" height="6"/>
+            <rect x="74" y="66" width="6" height="6"/><rect x="46" y="74" width="6" height="6"/>
+            <rect x="60" y="80" width="6" height="6"/><rect x="80" y="80" width="6" height="6"/>
+          </g>
+        </svg>
+      </div>
+      <div>
+        <div class="helper-text">Scan opens a report form for<br><strong class="mono" style="color:var(--chalk)">this exact car</strong> — no app needed.</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="section-head">
+  <h2>How it works</h2>
+</div>
+<div class="vehicle-grid">
+  <div class="stub">
+    <div class="permit-label">01</div>
+    <h3 style="font-size:1.05rem;">Register &amp; add a vehicle</h3>
+    <p class="stub-meta">We generate a random, unguessable token and print it as a QR sticker. Only its hash is ever stored.</p>
+  </div>
+  <div class="stub">
+    <div class="permit-label">02</div>
+    <h3 style="font-size:1.05rem;">Anyone scans, reports</h3>
+    <p class="stub-meta">A passerby scans the sticker and describes what they see. No login required for them.</p>
+  </div>
+  <div class="stub">
+    <div class="permit-label">03</div>
+    <h3 style="font-size:1.05rem;">Risk is scored, owner notified</h3>
+    <p class="stub-meta">The message is scanned for risk keywords, scored, and the owner is notified instantly.</p>
+  </div>
+</div>
+{% endblock %}

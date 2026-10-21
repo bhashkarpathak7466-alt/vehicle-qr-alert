@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>{% block title %}Vehicle QR Alert System{% endblock %}</title>
+  <link rel="stylesheet" href="/static/css/style.css" />
+</head>
+<body>
+  <div class="topbar">
+    <a class="brand" href="/">
+      <span class="brand-badge">QR</span>
+      Vehicle QR Alert
+    </a>
+    <nav class="nav-links">
+      <a href="/dashboard" data-auth-only>Dashboard</a>
+      <a href="/vehicles/add" data-auth-only>Add vehicle</a>
+      <a href="#" data-auth-only onclick="logout(); return false;">Log out</a>
+      <a href="/login" data-guest-only>Log in</a>
+      <a class="btn btn-primary" href="/register" data-guest-only style="padding:8px 16px;">Sign up</a>
+    </nav>
+  </div>
+
+  <div class="shell">
+    {% block content %}{% endblock %}
+  </div>
+
+  <footer>Vehicle QR Alert System — portfolio project. QR tokens are hashed, never stored raw.</footer>
+
+  <script src="/static/js/api.js"></script>
+  {% block scripts %}{% endblock %}
+</body>
+</html>

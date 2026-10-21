@@ -1,0 +1,77 @@
+{% extends "base.html" %}
+{% block title %}Add a vehicle — Vehicle QR Alert{% endblock %}
+{% block content %}
+<div class="card card-narrow" id="form-card">
+  <h2>Add a vehicle</h2>
+  <p class="helper-text" style="margin-bottom:22px;">Its QR sticker is generated the moment you save — and shown to you only once.</p>
+  <div id="banner" class="alert-banner"></div>
+  <form id="vehicle-form">
+    <div class="field">
+      <label for="make">Make</label>
+      <input id="make" placeholder="Maruti" required />
+    </div>
+    <div class="field">
+      <label for="model">Model</label>
+      <input id="model" placeholder="Swift" required />
+    </div>
+    <div class="field">
+      <label for="plate_number">Plate number</label>
+      <input id="plate_number" placeholder="UK07AB1234" required />
+    </div>
+    <div class="field">
+      <label for="color">Color</label>
+      <input id="color" placeholder="Red" />
+    </div>
+    <button class="btn btn-primary" style="width:100%;" type="submit">Generate QR sticker</button>
+  </form>
+</div>
+
+<div class="card card-narrow" id="result-card" style="display:none;">
+  <h2>Sticker ready</h2>
+  <div class="alert-banner show info">
+    This QR image is shown once. Download or print it now — it can't be regenerated later (only its hash is stored).
+  </div>
+  <div style="text-align:center; margin: 18px 0;">
+    <div class="permit-qr" style="margin: 0 auto 14px; width:180px; height:180px;">
+      <img id="qr-img" alt="QR sticker" />
+    </div>
+    <div class="stub-plate" id="plate-display"></div>
+  </div>
+  <a id="download-link" class="btn btn-ghost" style="width:100%; margin-bottom:10px;" download="vehicle-qr.png">Download sticker (PNG)</a>
+  <a class="btn btn-primary" style="width:100%;" href="/dashboard">Go to dashboard</a>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+requireAuthOrRedirect();
+
+document.getElementById("vehicle-form").addEventListener("submit", async (e) => {
+  e.preventDefault();
+  const banner = document.getElementById("banner");
+  hideBanner(banner);
+
+  const payload = {
+    make: document.getElementById("make").value,
+    model: document.getElementById("model").value,
+    plate_number: document.getElementById("plate_number").value,
+    color: document.getElementById("color").value || null,
+  };
+
+  try {
+    const vehicle = await api("/vehicles/", { method: "POST", body: payload, auth: true });
+
+    document.getElementById("form-card").style.display = "none";
+    const resultCard = document.getElementById("result-card");
+    resultCard.style.display = "block";
+
+    const src = `data:image/png;base64,${vehicle.qr_code_base64_png}`;
+    document.getElementById("qr-img").src = src;
+    document.getElementById("download-link").href = src;
+    document.getElementById("plate-display").textContent = vehicle.plate_number;
+  } catch (err) {
+    showBanner(banner, err.message, "error");
+  }
+});
+</script>
+{% endblock %}

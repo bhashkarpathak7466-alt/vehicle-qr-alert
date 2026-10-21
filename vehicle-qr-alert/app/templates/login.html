@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+{% block title %}Log in — Vehicle QR Alert{% endblock %}
+{% block content %}
+<div class="card card-narrow">
+  <h2>Log in</h2>
+  <div id="banner" class="alert-banner"></div>
+  <form id="login-form">
+    <div class="field">
+      <label for="email">Email</label>
+      <input id="email" type="email" required />
+    </div>
+    <div class="field">
+      <label for="password">Password</label>
+      <input id="password" type="password" required />
+    </div>
+    <button class="btn btn-primary" style="width:100%;" type="submit">Log in</button>
+  </form>
+  <p class="helper-text" style="margin-top:16px;">No account yet? <a href="/register">Sign up</a></p>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.getElementById("login-form").addEventListener("submit", async (e) => {
+  e.preventDefault();
+  const banner = document.getElementById("banner");
+  hideBanner(banner);
+
+  try {
+    const token = await api("/auth/login", {
+      method: "POST",
+      form: true,
+      body: {
+        username: document.getElementById("email").value,
+        password: document.getElementById("password").value,
+      },
+    });
+    setToken(token.access_token);
+    window.location.href = "/dashboard";
+  } catch (err) {
+    showBanner(banner, "Incorrect email or password", "error");
+  }
+});
+</script>
+{% endblock %}

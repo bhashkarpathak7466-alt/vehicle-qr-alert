@@ -1,0 +1,14 @@
+# Optional: only needed if you want to run against a real PostgreSQL
+# database instead of the default local SQLite file.
+#
+# Install with:  pip install -r requirements-postgres.txt
+#
+# On Windows this requires "Microsoft C++ Build Tools" to compile,
+# OR you can use psycopg[binary] (psycopg 3) which ships prebuilt
+# wheels and avoids the compiler requirement entirely:
+#
+#   pip install "psycopg[binary]"
+#
+# then set DATABASE_URL=postgresql+psycopg://user:pass@host:5432/dbname
+
+psycopg2-binary==2.9.9

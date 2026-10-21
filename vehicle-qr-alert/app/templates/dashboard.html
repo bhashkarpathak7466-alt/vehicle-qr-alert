@@ -1,0 +1,112 @@
+{% extends "base.html" %}
+{% block title %}Dashboard — Vehicle QR Alert{% endblock %}
+{% block content %}
+<div class="section-head">
+  <h2>Your vehicles</h2>
+  <a class="btn btn-primary" href="/vehicles/add">+ Add vehicle</a>
+</div>
+
+<div id="vehicle-container">
+  <p class="helper-text">Loading...</p>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+requireAuthOrRedirect();
+
+const riskChipClass = (label) => {
+  if (!label) return "low";
+  const l = label.toLowerCase();
+  if (l === "critical" || l === "high") return "critical";
+  if (l === "medium") return "medium";
+  return "low";
+};
+
+async function loadDashboard() {
+  const container = document.getElementById("vehicle-container");
+  try {
+    const vehicles = await api("/vehicles/", { auth: true });
+
+    if (vehicles.length === 0) {
+      container.innerHTML = `
+        <div class="empty-state">
+          <div class="icon">🚗</div>
+          <p>No vehicles yet. Add one to generate its QR sticker.</p>
+          <a class="btn btn-primary" href="/vehicles/add">Add your first vehicle</a>
+        </div>`;
+      return;
+    }
+
+    const cards = await Promise.all(vehicles.map(async (v) => {
+      let alerts = [];
+      try {
+        alerts = await api(`/alerts/vehicle/${v.id}`, { auth: true });
+      } catch (e) { /* no alerts yet or fetch failed silently */ }
+
+      const topAlerts = alerts.slice(0, 3).map(a => {
+        const authClass = a.fraud_assessment === "likely_genuine" ? "low"
+          : a.fraud_assessment === "likely_prank" ? "critical" : "medium";
+        const authLabel = (a.fraud_assessment || "needs_review").replace(/_/g, " ");
+        const thumb = a.image_path
+          ? `<a href="${a.image_path}" target="_blank"><img src="${a.image_path}" alt="Reported photo" style="width:56px; height:56px; object-fit:cover; border-radius:6px; margin-top:6px;" /></a>`
+          : "";
+        const displayLabel = a.fused_risk_label || a.risk_label;
+        const displayScore = a.fused_risk_score != null ? ` (${a.fused_risk_score}/100)` : "";
+        const corroboration = a.corroborating_reports > 1
+          ? `<div class="meta" style="color:var(--amber);">👥 ${a.corroborating_reports} independent reports for this incident</div>`
+          : "";
+        const reasonsList = (a.fusion_reasons || "").split("\n").filter(Boolean);
+        const reasonsHtml = reasonsList.length
+          ? `<details style="margin-top:6px;"><summary class="helper-text" style="cursor:pointer;">Why this score?</summary>
+               <ul style="margin:6px 0 0; padding-left:18px; color:var(--chalk-dim); font-size:0.82rem;">
+                 ${reasonsList.map(r => `<li>${escapeHtml(r)}</li>`).join("")}
+               </ul></details>`
+          : "";
+        return `
+        <div class="alert-row">
+          <div>
+            <div class="msg"><strong>${escapeHtml(a.issue_type || "Other")}:</strong> ${escapeHtml(a.message)}</div>
+            <div class="meta">Matched: ${escapeHtml(a.matched_keywords || "none")} · notified: ${escapeHtml(a.notified)}</div>
+            <div class="meta">Authenticity: <span class="chip ${authClass}" style="margin-left:4px;">${escapeHtml(authLabel)}</span>
+              <span class="chip" style="margin-left:4px; opacity:0.75; font-size:0.72rem;" title="${a.fraud_source === 'ai' ? 'Real vision-AI actually inspected the photo' : 'AI not active -- this is a text-only fallback guess, image content was NOT checked'}">${a.fraud_source === 'ai' ? '🤖 AI-checked' : '⚠️ unverified (no AI)'}</span>
+            </div>
+            ${a.fraud_reason ? `<div class="meta" style="color:var(--chalk-dim); font-size:0.78rem;">${escapeHtml(a.fraud_reason)}</div>` : ""}
+            ${corroboration}
+            ${thumb}
+            ${reasonsHtml}
+          </div>
+          <span class="chip ${riskChipClass(displayLabel)}">${escapeHtml(displayLabel)}${displayScore}</span>
+        </div>
+      `;
+      }).join("") || `<p class="helper-text" style="padding-top:8px;">No alerts reported yet.</p>`;
+
+      return `
+        <div class="stub" style="grid-column: 1 / -1;">
+          <div style="display:flex; justify-content:space-between; align-items:flex-start; flex-wrap:wrap; gap:10px;">
+            <div>
+              <div class="stub-plate">${escapeHtml(v.plate_number)}</div>
+              <div class="stub-meta">${escapeHtml(v.color || "")} ${escapeHtml(v.make)} ${escapeHtml(v.model)}</div>
+            </div>
+            <span class="helper-text">${alerts.length} alert${alerts.length === 1 ? "" : "s"} total</span>
+          </div>
+          ${topAlerts}
+        </div>
+      `;
+    }));
+
+    container.innerHTML = `<div class="vehicle-grid">${cards.join("")}</div>`;
+  } catch (err) {
+    container.innerHTML = `<div class="alert-banner show error">${escapeHtml(err.message)}</div>`;
+  }
+}
+
+function escapeHtml(str) {
+  const div = document.createElement("div");
+  div.textContent = str ?? "";
+  return div.innerHTML;
+}
+
+loadDashboard();
+</script>
+{% endblock %}

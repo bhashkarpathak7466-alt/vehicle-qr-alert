@@ -1,0 +1,64 @@
+{% extends "base.html" %}
+{% block title %}Sign up — Vehicle QR Alert{% endblock %}
+{% block content %}
+<div class="card card-narrow">
+  <h2>Create your account</h2>
+  <p class="helper-text" style="margin-bottom:22px;">Register once, then add every vehicle you own.</p>
+
+  <div id="banner" class="alert-banner"></div>
+
+  <form id="register-form">
+    <div class="field">
+      <label for="full_name">Full name</label>
+      <input id="full_name" required />
+    </div>
+    <div class="field">
+      <label for="email">Email</label>
+      <input id="email" type="email" required />
+    </div>
+    <div class="field">
+      <label for="phone">Phone (used for alert notifications)</label>
+      <input id="phone" placeholder="+91XXXXXXXXXX" />
+    </div>
+    <div class="field">
+      <label for="password">Password</label>
+      <input id="password" type="password" required minlength="6" />
+    </div>
+    <button class="btn btn-primary" style="width:100%;" type="submit">Create account</button>
+  </form>
+  <p class="helper-text" style="margin-top:16px;">Already registered? <a href="/login">Log in</a></p>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.getElementById("register-form").addEventListener("submit", async (e) => {
+  e.preventDefault();
+  const banner = document.getElementById("banner");
+  hideBanner(banner);
+
+  const payload = {
+    full_name: document.getElementById("full_name").value,
+    email: document.getElementById("email").value,
+    phone: document.getElementById("phone").value || null,
+    password: document.getElementById("password").value,
+  };
+
+  try {
+    await api("/auth/register", { method: "POST", body: payload });
+    showBanner(banner, "Account created — logging you in...", "success");
+
+    // Immediately log in so the user lands straight in the dashboard.
+    const token = await api("/auth/login", {
+      method: "POST",
+      form: true,
+      body: { username: payload.email, password: payload.password },
+    });
+    setToken(token.access_token);
+    window.location.href = "/dashboard";
+  } catch (err) {
+    showBanner(banner, err.message, "error");
+  }
+});
+</script>
+{% endblock %}

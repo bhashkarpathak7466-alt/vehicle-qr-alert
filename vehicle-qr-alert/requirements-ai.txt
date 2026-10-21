@@ -1,0 +1,8 @@
+# Optional: only needed if you want to enable the REAL vision-AI
+# authenticity check (AI_ENABLED=true + AI_API_KEY set in .env).
+# Without this installed, the app still runs fine -- it just always
+# uses the rule-based authenticity heuristic instead.
+#
+# Install with:  pip install -r requirements-ai.txt
+
+anthropic>=0.40.0
